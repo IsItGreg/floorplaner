@@ -6,7 +6,7 @@ import { Stage, Layer, Rect, Circle } from "react-konva";
 type Corner = {
   x: number;
   y: number;
-  id: number;
+  color?: string;
 };
 
 type Wall = {
@@ -19,26 +19,19 @@ function App() {
   const [creatingWall, setCreatingWall] = React.useState(false);
   const [circlePosition, setCirclePosition] = React.useState({ x: 0, y: 0 });
   const [corners, setCorners] = React.useState<Corner[]>([]);
-  const [newCorners, setNewCorners] = React.useState<Corner[]>([]);
+  // const [newCorners, setNewCorners] = React.useState<Corner[]>([]);
   const [walls, setWalls] = React.useState<Wall[]>([]);
+  const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
 
   const handleMouseMove = (e: any) => {
     const stage = e.target.getStage();
     const mousePos = stage.getRelativePointerPosition();
     setCirclePosition({ x: mousePos.x, y: mousePos.y });
-
-    if (creatingRoom && newCorners.length === 4) {
-      setNewCorners([
-        newCorners[0],
-        { ...newCorners[1], x: mousePos.x },
-        { ...newCorners[2], x: mousePos.x, y: mousePos.y },
-        { ...newCorners[3], y: mousePos.y },
-      ]);
-    } else if (creatingWall && newCorners.length === 2) {
-      setNewCorners([
-        newCorners[0],
-        { ...newCorners[1], x: mousePos.x, y: mousePos.y },
-      ]);
+    if (creatingWall) {
+      if (newCorner) {
+        newCorner.x = mousePos.x;
+        newCorner.y = mousePos.y;
+      }
     }
   };
 
@@ -46,44 +39,54 @@ function App() {
     const stage = e.target.getStage();
     const mousePos = stage.getRelativePointerPosition();
     if (creatingRoom) {
-      const maxCornerId = Math.max(...corners.map((corner) => corner.id), 0);
-      setNewCorners([
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 1 },
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 2 },
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 3 },
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 4 },
-      ]);
-    } else if (creatingWall) {
-      const maxCornerId = Math.max(...corners.map((corner) => corner.id), 0);
-      setNewCorners([
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 1 },
-        { x: mousePos.x, y: mousePos.y, id: maxCornerId + 2 },
-      ]);
     }
   };
 
   const handleMouseUp = (e: any) => {
-    // const stage = e.target.getStage();
-    // const mousePos = stage.getRelativePointerPosition();
-    if (creatingRoom) {
-      setCorners([...corners, ...newCorners]);
-      setWalls([
-        ...walls,
-        { corners: [newCorners[0], newCorners[1]], thickness: 20 },
-        { corners: [newCorners[1], newCorners[2]], thickness: 20 },
-        { corners: [newCorners[2], newCorners[3]], thickness: 20 },
-        { corners: [newCorners[3], newCorners[0]], thickness: 20 },
-      ]);
-      setNewCorners([]);
-      setCreatingRoom(false);
-    } else if (creatingWall) {
-      setCorners([...corners, ...newCorners]);
-      setWalls([
-        ...walls,
-        { corners: [newCorners[0], newCorners[1]], thickness: 20 },
-      ]);
-      setNewCorners([]);
-      setCreatingWall(false);
+    const stage = e.target.getStage();
+    const mousePos = stage.getRelativePointerPosition();
+
+    // Get nearest corner and check if it's less than 30 away from mouse
+
+    // Problem: last corner added is floating and locked to mouse, so nearest corner is always the last corner
+    const nearestCorner = corners.reduce((prev, curr) => {
+      const prevDist = Math.sqrt(
+        Math.pow(prev.x - mousePos.x, 2) + Math.pow(prev.y - mousePos.y, 2)
+      );
+      const currDist = Math.sqrt(
+        Math.pow(curr.x - mousePos.x, 2) + Math.pow(curr.y - mousePos.y, 2)
+      );
+      return prevDist < currDist ? prev : curr;
+    }, corners[0]);
+    let nextCorner = null;
+    if (nearestCorner) {
+      const nearestCornerDist = Math.sqrt(
+        Math.pow(nearestCorner.x - mousePos.x, 2) +
+          Math.pow(nearestCorner.y - mousePos.y, 2)
+      );
+      if (nearestCornerDist < 30) {
+        nextCorner = nearestCorner;
+      }
+      console.log(nearestCornerDist);
+    }
+
+    if (creatingWall) {
+      let lastCorner = newCorner;
+      let newCorners = [...corners];
+      if (!lastCorner) {
+        lastCorner = { x: mousePos.x, y: mousePos.y };
+        newCorners.push(lastCorner);
+      }
+      if (!nextCorner) {
+        nextCorner = { x: mousePos.x, y: mousePos.y };
+        setCorners([...newCorners, nextCorner]);
+      }
+      const newWall = {
+        corners: [lastCorner, nextCorner],
+        thickness: 20,
+      };
+      setWalls([...walls, newWall]);
+      setNewCorner(nextCorner);
     }
   };
 
@@ -95,7 +98,9 @@ function App() {
             Floor Plan App
           </h1>
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className={`${
+              creatingRoom ? "bg-blue-700" : "bg-blue-500"
+            } hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
             onClick={() => {
               setCreatingWall(false);
               setCreatingRoom(true);
@@ -104,7 +109,9 @@ function App() {
             <span>New room</span>
           </button>
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className={`${
+              creatingWall ? "bg-blue-700" : "bg-blue-500"
+            } hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
             onClick={() => {
               setCreatingRoom(false);
               setCreatingWall(true);
@@ -124,25 +131,25 @@ function App() {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
         >
-          <Layer>
+          {/* <Layer>
             {newCorners.map((corner, index) => (
               <Circle
                 key={index}
                 x={corner.x}
                 y={corner.y}
-                radius={10}
+                radius={20}
                 fill="blue"
               />
             ))}
-          </Layer>
+          </Layer> */}
           <Layer>
             {corners.map((corner, index) => (
               <Circle
                 key={index}
                 x={corner.x}
                 y={corner.y}
-                radius={10}
-                fill="green"
+                radius={30}
+                fill={corner.color || "green"}
               />
             ))}
           </Layer>
@@ -172,12 +179,12 @@ function App() {
             })}
           </Layer>
           <Layer>
-            {creatingRoom && (
+            {(creatingRoom || creatingWall) && (
               // Circle follows mouse
               <Circle
                 x={circlePosition.x}
                 y={circlePosition.y}
-                radius={20}
+                radius={5}
                 fill="red"
               />
             )}
