@@ -2,6 +2,9 @@ import React from "react";
 import "../App.css";
 import { Stage, Layer, Rect, Circle } from "react-konva";
 import { Button } from "@mui/material";
+import Konva from "konva";
+
+const RADIUS = 30;
 
 // essentially vertices and edges of a graph
 type Corner = {
@@ -26,9 +29,10 @@ function Planner() {
   const [corners, setCorners] = React.useState<Corner[]>([]);
   const [walls, setWalls] = React.useState<Wall[]>([]);
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
+  const [newWall, setNewWall] = React.useState<Wall | null>(null);
 
-  const handleMouseMove = (e: any) => {
-    const stage = e.target.getStage();
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
     setCirclePosition({ x: mousePos.x, y: mousePos.y });
 
@@ -40,30 +44,83 @@ function Planner() {
     }
   };
 
-  const handleMouseDown = (e: any) => {
-    const stage = e.target.getStage();
+  const getCornersUnderMouse = (mousePos: { x: number; y: number }) => {
+    return corners.filter((corner) => {
+      return (
+        Math.abs(corner.x - mousePos.x) < RADIUS &&
+        Math.abs(corner.y - mousePos.y) < RADIUS &&
+        corner !== newCorner
+      );
+    });
+  };
+
+  const getClosestCornerFromList = (
+    mousePos: { x: number; y: number },
+    cornerList: Corner[]
+  ) => {
+    return cornerList.reduce((prev, curr) => {
+      const prevDist = Math.sqrt(
+        Math.pow(prev.x - mousePos.x, 2) + Math.pow(prev.y - mousePos.y, 2)
+      );
+      const currDist = Math.sqrt(
+        Math.pow(curr.x - mousePos.x, 2) + Math.pow(curr.y - mousePos.y, 2)
+      );
+      return prevDist < currDist ? prev : curr;
+    });
+  };
+
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
     if (mode === Mode.CreateWalls) {
-      if (newCorner) {
-        // Creates a new corner
-        const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-        setNewCorner(nextCorner);
-        setCorners([...corners, nextCorner]);
-        const wall = { corners: [newCorner, nextCorner], thickness: 10 };
-        setWalls([...walls, wall]);
+      console.log(stage);
+      console.log(getCornersUnderMouse(mousePos));
+      const cornersUnderMouse = getCornersUnderMouse(mousePos);
+      if (cornersUnderMouse.length > 0) {
+        const nearestCorner = getClosestCornerFromList(
+          mousePos,
+          cornersUnderMouse
+        );
+        console.log(nearestCorner, newCorner);
+        if (nearestCorner) {
+          // Clicked on the same corner
+          if (newWall) {
+            newWall.corners[1] = nearestCorner;
+            if (newWall.corners[0] === newWall.corners[1]) {
+              // remove new wall from walls
+              setWalls(walls.filter((wall) => wall !== newWall));
+            }
+            setNewWall(null);
+          }
+          // remove new corner from corners
+          setCorners(corners.filter((corner) => corner !== newCorner));
+          setNewCorner(null);
+          setMode(Mode.None);
+        }
       } else {
-        // Creates the first corner of a set
-        const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
-        const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-        setNewCorner(nextCorner);
-        setCorners([...corners, firstCorner, nextCorner]);
-        const wall = { corners: [firstCorner, nextCorner], thickness: 10 };
-        setWalls([...walls, wall]);
+        if (newCorner) {
+          // Creates a new corner
+          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+          setNewCorner(nextCorner);
+          setCorners([...corners, nextCorner]);
+          const wall = { corners: [newCorner, nextCorner], thickness: 10 };
+          setNewWall(wall);
+          setWalls([...walls, wall]);
+        } else {
+          // Creates the first corner of a set
+          const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
+          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+          setNewCorner(nextCorner);
+          setCorners([...corners, firstCorner, nextCorner]);
+          const wall = { corners: [firstCorner, nextCorner], thickness: 10 };
+          setNewWall(wall);
+          setWalls([...walls, wall]);
+        }
       }
     }
   };
 
-  const handleMouseUp = (e: any) => {};
+  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {};
 
   return (
     <div className="flex flex-row">
@@ -108,7 +165,7 @@ function Planner() {
                 key={index}
                 x={corner.x}
                 y={corner.y}
-                radius={30}
+                radius={RADIUS}
                 fill={corner.color || "green"}
               />
             ))}
