@@ -73,20 +73,25 @@ function Planner() {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
     if (mode === Mode.CreateWalls) {
-      console.log(stage);
-      console.log(getCornersUnderMouse(mousePos));
       const cornersUnderMouse = getCornersUnderMouse(mousePos);
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
           mousePos,
           cornersUnderMouse
         );
-        console.log(nearestCorner, newCorner);
-        if (nearestCorner) {
+        if (newWall && newCorner) {
           // Clicked on the same corner
           if (newWall) {
             newWall.corners[1] = nearestCorner;
-            if (newWall.corners[0] === newWall.corners[1]) {
+            if (
+              newWall.corners[0] === newWall.corners[1] ||
+              walls.filter(
+                (wall) =>
+                  newWall.corners.includes(wall.corners[0]) &&
+                  newWall.corners.includes(wall.corners[1]) &&
+                  wall !== newWall
+              ).length > 0
+            ) {
               // remove new wall from walls
               setWalls(walls.filter((wall) => wall !== newWall));
             }
@@ -96,6 +101,14 @@ function Planner() {
           setCorners(corners.filter((corner) => corner !== newCorner));
           setNewCorner(null);
           setMode(Mode.None);
+        } else {
+          // Clicked on a new corner
+          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+          setNewCorner(nextCorner);
+          setCorners([...corners, nextCorner]);
+          const wall = { corners: [nearestCorner, nextCorner], thickness: 10 };
+          setNewWall(wall);
+          setWalls([...walls, wall]);
         }
       } else {
         if (newCorner) {
