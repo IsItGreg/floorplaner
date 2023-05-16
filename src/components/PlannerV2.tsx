@@ -1,6 +1,6 @@
 import React from "react";
 import "../App.css";
-import { Stage, Layer, Rect, Circle } from "react-konva";
+import { Stage, Layer, Rect, Circle, Shape, Line } from "react-konva";
 import { Button } from "@mui/material";
 import Konva from "konva";
 
@@ -204,6 +204,105 @@ function Planner() {
                     ) *
                     (180 / Math.PI)
                   }
+                />
+              );
+            })}
+          </Layer>
+          <Layer>
+            {corners.map((corner, index) => {
+              // get walls that have this corner
+              const wallsWithCorner = walls.filter((wall) =>
+                wall.corners.includes(corner)
+              );
+
+              // dont continue if there is less than two walls
+              if (wallsWithCorner.length < 2) return null;
+
+              // map walls to know the positive angle of the wall away from the other corner
+              const wallsAndAngles = wallsWithCorner.map((wall) => {
+                const otherCorner = wall.corners.filter((c) => c !== corner)[0];
+                const angle = Math.atan2(
+                  otherCorner.y - corner.y,
+                  otherCorner.x - corner.x
+                );
+                return { wall, angle: angle < 0 ? angle + 2 * Math.PI : angle };
+              });
+
+              // sort the angles
+              const sortedWallsAndAngles = wallsAndAngles.sort(
+                (a, b) => a.angle - b.angle
+              );
+
+              // add firt angle + 2pi to end of array
+              sortedWallsAndAngles.push({
+                ...sortedWallsAndAngles[0],
+                angle: sortedWallsAndAngles[0].angle + 2 * Math.PI,
+              });
+
+              // find the two consecutive walls that have an angle of more than pi between them
+              const wallsAndAnglesWithGaps = sortedWallsAndAngles
+                .map((wA, index) => {
+                  return {
+                    wA,
+                    nextWA:
+                      sortedWallsAndAngles[index + 1] ||
+                      sortedWallsAndAngles[0],
+                  };
+                })
+                .filter(({ wA, nextWA }) => nextWA.angle - wA.angle > Math.PI);
+
+              // if there are no gaps, return null
+              if (wallsAndAnglesWithGaps.length === 0) return null;
+
+              const leftPoint = {
+                x:
+                  corner.x +
+                  (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
+                    Math.cos(wallsAndAnglesWithGaps[0].wA.angle + Math.PI / 2),
+                y:
+                  corner.y +
+                  (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
+                    Math.sin(wallsAndAnglesWithGaps[0].wA.angle + Math.PI / 2),
+              };
+
+              const rightPoint = {
+                x:
+                  corner.x +
+                  (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
+                    Math.cos(
+                      wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2
+                    ),
+                y:
+                  corner.y +
+                  (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
+                    Math.sin(
+                      wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2
+                    ),
+              };
+
+              // find intersection of lines extending from left and right points
+              const m1 = Math.tan(wallsAndAnglesWithGaps[0].wA.angle);
+              const m2 = Math.tan(wallsAndAnglesWithGaps[0].nextWA.angle);
+              const x =
+                (m1 * leftPoint.x -
+                  m2 * rightPoint.x +
+                  rightPoint.y -
+                  leftPoint.y) /
+                (m1 - m2);
+              const y = m1 * (x - leftPoint.x) + leftPoint.y;
+
+              return (
+                <Shape
+                  sceneFunc={(context, shape) => {
+                    context.beginPath();
+                    context.moveTo(leftPoint.x, leftPoint.y);
+                    context.lineTo(x, y);
+                    context.lineTo(rightPoint.x, rightPoint.y);
+                    context.lineTo(corner.x, corner.y);
+                    context.closePath();
+                    context.fillStrokeShape(shape);
+                  }}
+                  fill="red"
                 />
               );
             })}
