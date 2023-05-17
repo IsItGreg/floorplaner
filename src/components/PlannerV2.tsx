@@ -30,13 +30,24 @@ function Planner() {
   const [walls, setWalls] = React.useState<Wall[]>([]);
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
   const [newWall, setNewWall] = React.useState<Wall | null>(null);
+  const [selectedCorner, setSelectedCorner] = React.useState<Corner | null>(
+    null
+  );
+  const [draggingCorner, setDraggingCorner] = React.useState<Corner | null>(
+    null
+  );
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
     setCirclePosition({ x: mousePos.x, y: mousePos.y });
 
-    if (mode === Mode.CreateWalls) {
+    if (mode === Mode.None) {
+      if (draggingCorner) {
+        draggingCorner.x = mousePos.x;
+        draggingCorner.y = mousePos.y;
+      }
+    } else if (mode === Mode.CreateWalls) {
       if (newCorner) {
         newCorner.x = mousePos.x;
         newCorner.y = mousePos.y;
@@ -72,7 +83,21 @@ function Planner() {
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
-    if (mode === Mode.CreateWalls) {
+    if (mode === Mode.None) {
+      const cornersUnderMouse = getCornersUnderMouse(mousePos);
+      if (cornersUnderMouse.length > 0) {
+        const nearestCorner = getClosestCornerFromList(
+          mousePos,
+          cornersUnderMouse
+        );
+        if (selectedCorner !== nearestCorner) {
+          setSelectedCorner(nearestCorner);
+        }
+        setDraggingCorner(nearestCorner);
+      } else {
+        setSelectedCorner(null);
+      }
+    } else if (mode === Mode.CreateWalls) {
       const cornersUnderMouse = getCornersUnderMouse(mousePos);
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
@@ -133,7 +158,11 @@ function Planner() {
     }
   };
 
-  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {};
+  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (draggingCorner) {
+      setDraggingCorner(null);
+    }
+  };
 
   return (
     <div className="flex flex-row">
@@ -179,7 +208,7 @@ function Planner() {
                 x={corner.x}
                 y={corner.y}
                 radius={RADIUS}
-                fill={corner.color || "green"}
+                fill={selectedCorner === corner ? "purple" : "green"}
               />
             ))}
           </Layer>
