@@ -1,11 +1,9 @@
-const Sidebar = () => {
+export const Sidebar = () => {
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline text-center">
+    <div className="h-full w-64 flex-shrink-0 bg-slate-800">
+      <h1 className="mt-10 text-center text-3xl font-bold text-slate-200">
         Floor Plan App
       </h1>
     </div>
   );
 };
-
-export default Sidebar;

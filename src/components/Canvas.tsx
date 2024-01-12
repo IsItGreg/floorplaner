@@ -2,6 +2,7 @@ import Konva from "konva";
 import React from "react";
 import { Circle, Layer, Rect, Shape, Stage } from "react-konva";
 import { CanvasActions, GlobalContext, Mode } from "./GlobalContext";
+import useMeasure from "react-use-measure";
 
 const RADIUS = 30;
 
@@ -19,19 +20,20 @@ type Wall = {
 
 const Canvas = () => {
   const [circlePosition, setCirclePosition] = React.useState({ x: 0, y: 0 });
-  // const [mode, setMode] = React.useState(Mode.NONE);
   const [corners, setCorners] = React.useState<Corner[]>([]);
   const [walls, setWalls] = React.useState<Wall[]>([]);
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
   const [newWall, setNewWall] = React.useState<Wall | null>(null);
   const [selectedCorner, setSelectedCorner] = React.useState<Corner | null>(
-    null
+    null,
   );
   const [draggingCorner, setDraggingCorner] = React.useState<Corner | null>(
-    null
+    null,
   );
 
   const { state, dispatch } = React.useContext(GlobalContext);
+
+  const [ref, bounds] = useMeasure();
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
@@ -63,14 +65,14 @@ const Canvas = () => {
 
   const getClosestCornerFromList = (
     mousePos: { x: number; y: number },
-    cornerList: Corner[]
+    cornerList: Corner[],
   ) => {
     return cornerList.reduce((prev, curr) => {
       const prevDist = Math.sqrt(
-        Math.pow(prev.x - mousePos.x, 2) + Math.pow(prev.y - mousePos.y, 2)
+        Math.pow(prev.x - mousePos.x, 2) + Math.pow(prev.y - mousePos.y, 2),
       );
       const currDist = Math.sqrt(
-        Math.pow(curr.x - mousePos.x, 2) + Math.pow(curr.y - mousePos.y, 2)
+        Math.pow(curr.x - mousePos.x, 2) + Math.pow(curr.y - mousePos.y, 2),
       );
       return prevDist < currDist ? prev : curr;
     });
@@ -84,7 +86,7 @@ const Canvas = () => {
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
           mousePos,
-          cornersUnderMouse
+          cornersUnderMouse,
         );
         if (selectedCorner !== nearestCorner) {
           setSelectedCorner(nearestCorner);
@@ -98,7 +100,7 @@ const Canvas = () => {
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
           mousePos,
-          cornersUnderMouse
+          cornersUnderMouse,
         );
         if (newWall && newCorner) {
           // Clicked on the same corner
@@ -110,7 +112,7 @@ const Canvas = () => {
                 (wall) =>
                   newWall.corners.includes(wall.corners[0]) &&
                   newWall.corners.includes(wall.corners[1]) &&
-                  wall !== newWall
+                  wall !== newWall,
               ).length > 0
             ) {
               // remove new wall from walls
@@ -161,12 +163,12 @@ const Canvas = () => {
   };
 
   return (
-    <div className="canvas">
+    <div ref={ref} className="canvas h-full w-full">
       <Stage
-        width={window.innerWidth}
-        height={window.innerHeight}
+        width={bounds.width}
+        height={bounds.height}
         // draggable={!creatingRoom && !creatingWall}
-        className="bg-gray-200"
+        className="bg-slate-200"
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -203,14 +205,14 @@ const Canvas = () => {
                 y={wall.corners[0].y}
                 width={Math.sqrt(
                   Math.pow(wall.corners[1].x - wall.corners[0].x, 2) +
-                    Math.pow(wall.corners[1].y - wall.corners[0].y, 2)
+                    Math.pow(wall.corners[1].y - wall.corners[0].y, 2),
                 )}
                 height={wall.thickness}
                 fill="black"
                 rotation={
                   Math.atan2(
                     wall.corners[1].y - wall.corners[0].y,
-                    wall.corners[1].x - wall.corners[0].x
+                    wall.corners[1].x - wall.corners[0].x,
                   ) *
                   (180 / Math.PI)
                 }
@@ -222,7 +224,7 @@ const Canvas = () => {
           {corners.map((corner, index) => {
             // get walls that have this corner
             const wallsWithCorner = walls.filter((wall) =>
-              wall.corners.includes(corner)
+              wall.corners.includes(corner),
             );
 
             // dont continue if there is less than two walls
@@ -233,14 +235,14 @@ const Canvas = () => {
               const otherCorner = wall.corners.filter((c) => c !== corner)[0];
               const angle = Math.atan2(
                 otherCorner.y - corner.y,
-                otherCorner.x - corner.x
+                otherCorner.x - corner.x,
               );
               return { wall, angle: angle < 0 ? angle + 2 * Math.PI : angle };
             });
 
             // sort the angles
             const sortedWallsAndAngles = wallsAndAngles.sort(
-              (a, b) => a.angle - b.angle
+              (a, b) => a.angle - b.angle,
             );
 
             // add firt angle + 2pi to end of array
@@ -279,13 +281,13 @@ const Canvas = () => {
                 corner.x +
                 (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
                   Math.cos(
-                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2
+                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2,
                   ),
               y:
                 corner.y +
                 (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
                   Math.sin(
-                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2
+                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2,
                   ),
             };
 
