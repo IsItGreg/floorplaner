@@ -1,4 +1,5 @@
 import { Dispatch, createContext, useReducer } from "react";
+import { Wall } from "./Canvas";
 
 export enum Mode {
   NONE = "none",
@@ -7,16 +8,18 @@ export enum Mode {
 
 export type AppState = {
   mode: Mode;
+  walls: Wall[];
 };
 
 const initialState = {
   mode: Mode.NONE,
+  walls: [],
 };
 
 export const GlobalContext = createContext<{
   state: AppState;
   dispatch: Dispatch<CanvasAction>;
-}>({ state: { mode: Mode.NONE }, dispatch: () => null });
+}>({ state: { mode: Mode.NONE, walls: [] }, dispatch: () => null });
 
 export const GlobalContextProvider = ({
   children,
@@ -34,14 +37,19 @@ export const GlobalContextProvider = ({
 
 export enum CanvasActions {
   CHANGE_MODE,
+  SET_WALLS,
 }
 
-export type CanvasAction = { type: CanvasActions.CHANGE_MODE; mode: Mode };
+export type CanvasAction =
+  | { type: CanvasActions.CHANGE_MODE; mode: Mode }
+  | { type: CanvasActions.SET_WALLS; walls: Wall[] };
 
 const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
     case CanvasActions.CHANGE_MODE:
       return { ...state, mode: action.mode };
+    case CanvasActions.SET_WALLS:
+      return { ...state, walls: action.walls };
     default:
       return state;
   }

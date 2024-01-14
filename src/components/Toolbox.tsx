@@ -8,9 +8,9 @@ export const Toolbox = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
 
   return (
-    <div style={{ position: "absolute", marginLeft: 15, top: 10 }}>
+    <div className="absolute top-3 ml-4">
       <ToggleButtonGroup
-        style={{ backgroundColor: "white" }}
+        className="bg-white"
         orientation="vertical"
         value={state.mode}
         exclusive

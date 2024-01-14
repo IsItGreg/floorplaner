@@ -13,12 +13,14 @@ type Corner = {
   color?: string;
 };
 
-type Wall = {
+export type Wall = {
   corners: Corner[]; // 2 corners
   thickness: number;
 };
 
 const Canvas = () => {
+  const { state, dispatch } = React.useContext(GlobalContext);
+
   const [circlePosition, setCirclePosition] = React.useState({ x: 0, y: 0 });
   const [corners, setCorners] = React.useState<Corner[]>([]);
   const [walls, setWalls] = React.useState<Wall[]>([]);
@@ -31,9 +33,11 @@ const Canvas = () => {
     null,
   );
 
-  const { state, dispatch } = React.useContext(GlobalContext);
-
   const [ref, bounds] = useMeasure();
+
+  React.useEffect(() => {
+    dispatch({ type: CanvasActions.SET_WALLS, walls });
+  }, [dispatch, walls]);
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
