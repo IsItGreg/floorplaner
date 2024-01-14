@@ -1,8 +1,8 @@
 import { Dispatch, createContext, useReducer } from "react";
 
 export enum Mode {
-  NONE,
-  CREATE_WALLS,
+  NONE = "none",
+  CREATE_WALLS = "create_walls",
 }
 
 export type AppState = {
@@ -33,20 +33,15 @@ export const GlobalContextProvider = ({
 };
 
 export enum CanvasActions {
-  CREATE_WALLS = "CREATE_WALLS",
-  RESET_MODE = "RESET_MODE",
+  CHANGE_MODE,
 }
 
-export type CanvasAction =
-  | { type: CanvasActions.CREATE_WALLS }
-  | { type: CanvasActions.RESET_MODE };
+export type CanvasAction = { type: CanvasActions.CHANGE_MODE; mode: Mode };
 
 const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
-    case CanvasActions.CREATE_WALLS:
-      return { ...state, mode: Mode.CREATE_WALLS };
-    case CanvasActions.RESET_MODE:
-      return { ...state, mode: Mode.NONE };
+    case CanvasActions.CHANGE_MODE:
+      return { ...state, mode: action.mode };
     default:
       return state;
   }

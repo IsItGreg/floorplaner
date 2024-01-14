@@ -13,9 +13,9 @@ const EditPlanDial = () => {
       icon={<SpeedDialIcon />}
     >
       <SpeedDialAction
-        onClick={() => {
-          dispatch({ type: CanvasActions.CREATE_WALLS });
-        }}
+        // onClick={() => {
+        //   dispatch({ type: CanvasActions.CREATE_WALLS });
+        // }}
         icon={<CreateIcon />}
         tooltipTitle="New Wall"
       />

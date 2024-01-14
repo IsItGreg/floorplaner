@@ -123,7 +123,7 @@ const Canvas = () => {
           // remove new corner from corners
           setCorners(corners.filter((corner) => corner !== newCorner));
           setNewCorner(null);
-          dispatch({ type: CanvasActions.RESET_MODE });
+          dispatch({ type: CanvasActions.CHANGE_MODE, mode: Mode.NONE });
         } else {
           // Clicked on a new corner
           const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
@@ -168,7 +168,7 @@ const Canvas = () => {
         width={bounds.width}
         height={bounds.height}
         // draggable={!creatingRoom && !creatingWall}
-        className="bg-slate-200"
+        className="bg-slate-50"
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
