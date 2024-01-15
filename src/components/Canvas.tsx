@@ -96,7 +96,9 @@ const Canvas = () => {
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
-    if (state.mode === ToolMode.NONE) {
+    if (e.evt.button === 1) {
+      stage.startDrag();
+    } else if (state.mode === ToolMode.NONE) {
       const cornersUnderMouse = getCornersUnderMouse(mousePos);
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
@@ -192,6 +194,24 @@ const Canvas = () => {
     }
   };
 
+  const handleScroll = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    const stage = e.target.getStage()!;
+
+    const oldScale = stage.scaleX();
+    const pointerPos = stage.getPointerPosition()!;
+    const mousePointTo = {
+      x: (pointerPos.x - stage.x()) / oldScale,
+      y: (pointerPos.y - stage.y()) / oldScale,
+    };
+    const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
+    stage.scale({ x: newScale, y: newScale });
+    const newPos = {
+      x: pointerPos.x - mousePointTo.x * newScale,
+      y: pointerPos.y - mousePointTo.y * newScale,
+    };
+    stage.position(newPos);
+  };
+
   return (
     <div ref={ref} className="canvas h-full w-full">
       <Stage
@@ -202,6 +222,8 @@ const Canvas = () => {
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
+        onWheel={handleScroll}
+        draggable={state.mode === ToolMode.PAN}
       >
         <Layer>
           {/* Layer for walls around rooms */}

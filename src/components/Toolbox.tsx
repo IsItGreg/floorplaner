@@ -1,4 +1,4 @@
-import { AddCircle, AddBox, PanToolAlt } from "@mui/icons-material";
+import { AddCircle, AddBox, PanToolAlt, PanTool } from "@mui/icons-material";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
 import { CanvasActions, GlobalContext } from "./GlobalContext";
@@ -22,6 +22,9 @@ export const Toolbox = () => {
       >
         <ToggleButton value={ToolMode.NONE}>
           <PanToolAlt />
+        </ToggleButton>
+        <ToggleButton value={ToolMode.PAN}>
+          <PanTool />
         </ToggleButton>
         {/* <ToggleButton value={Mode.CREATE_WALLS}>
           <AddCircle />

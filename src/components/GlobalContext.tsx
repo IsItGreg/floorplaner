@@ -3,6 +3,7 @@ import { Room, Wall } from "./Canvas";
 
 export enum ToolMode {
   NONE = "none",
+  PAN = "pan",
   CREATE_WALLS = "create_walls",
   CREATE_ROOM = "create_room",
 }
