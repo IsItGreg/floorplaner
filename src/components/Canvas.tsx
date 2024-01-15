@@ -1,7 +1,7 @@
 import Konva from "konva";
 import React from "react";
 import { Circle, Layer, Rect, Shape, Stage } from "react-konva";
-import { CanvasActions, GlobalContext, Mode } from "./GlobalContext";
+import { CanvasActions, GlobalContext, ToolMode } from "./GlobalContext";
 import useMeasure from "react-use-measure";
 
 const RADIUS = 30;
@@ -18,14 +18,20 @@ export type Wall = {
   thickness: number;
 };
 
+export type Room = {
+  corners: Corner[]; // 2 corners
+};
+
 const Canvas = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
 
   const [circlePosition, setCirclePosition] = React.useState({ x: 0, y: 0 });
   const [corners, setCorners] = React.useState<Corner[]>([]);
-  const [walls, setWalls] = React.useState<Wall[]>([]);
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
-  const [newWall, setNewWall] = React.useState<Wall | null>(null);
+
+  const [rooms, setRooms] = React.useState<Room[]>([]);
+  const [newRoom, setNewRoom] = React.useState<Room | null>(null);
+
   const [selectedCorner, setSelectedCorner] = React.useState<Corner | null>(
     null,
   );
@@ -36,20 +42,25 @@ const Canvas = () => {
   const [ref, bounds] = useMeasure();
 
   React.useEffect(() => {
-    dispatch({ type: CanvasActions.SET_WALLS, walls });
-  }, [dispatch, walls]);
+    dispatch({ type: CanvasActions.SET_ROOMS, rooms });
+  }, [dispatch, rooms]);
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
     setCirclePosition({ x: mousePos.x, y: mousePos.y });
 
-    if (state.mode === Mode.NONE) {
+    if (state.mode === ToolMode.NONE) {
       if (draggingCorner) {
         draggingCorner.x = mousePos.x;
         draggingCorner.y = mousePos.y;
       }
-    } else if (state.mode === Mode.CREATE_WALLS) {
+    } else if (state.mode === ToolMode.CREATE_WALLS) {
+      if (newCorner) {
+        newCorner.x = mousePos.x;
+        newCorner.y = mousePos.y;
+      }
+    } else if (state.mode === ToolMode.CREATE_ROOM) {
       if (newCorner) {
         newCorner.x = mousePos.x;
         newCorner.y = mousePos.y;
@@ -85,7 +96,7 @@ const Canvas = () => {
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
-    if (state.mode === Mode.NONE) {
+    if (state.mode === ToolMode.NONE) {
       const cornersUnderMouse = getCornersUnderMouse(mousePos);
       if (cornersUnderMouse.length > 0) {
         const nearestCorner = getClosestCornerFromList(
@@ -99,63 +110,78 @@ const Canvas = () => {
       } else {
         setSelectedCorner(null);
       }
-    } else if (state.mode === Mode.CREATE_WALLS) {
-      const cornersUnderMouse = getCornersUnderMouse(mousePos);
-      if (cornersUnderMouse.length > 0) {
-        const nearestCorner = getClosestCornerFromList(
-          mousePos,
-          cornersUnderMouse,
-        );
-        if (newWall && newCorner) {
-          // Clicked on the same corner
-          if (newWall) {
-            newWall.corners[1] = nearestCorner;
-            if (
-              newWall.corners[0] === newWall.corners[1] ||
-              walls.filter(
-                (wall) =>
-                  newWall.corners.includes(wall.corners[0]) &&
-                  newWall.corners.includes(wall.corners[1]) &&
-                  wall !== newWall,
-              ).length > 0
-            ) {
-              // remove new wall from walls
-              setWalls(walls.filter((wall) => wall !== newWall));
-            }
-            setNewWall(null);
-          }
-          // remove new corner from corners
-          setCorners(corners.filter((corner) => corner !== newCorner));
-          setNewCorner(null);
-          dispatch({ type: CanvasActions.CHANGE_MODE, mode: Mode.NONE });
-        } else {
-          // Clicked on a new corner
-          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-          setNewCorner(nextCorner);
-          setCorners([...corners, nextCorner]);
-          const wall = { corners: [nearestCorner, nextCorner], thickness: 10 };
-          setNewWall(wall);
-          setWalls([...walls, wall]);
-        }
+    } else if (state.mode === ToolMode.CREATE_WALLS) {
+      // const cornersUnderMouse = getCornersUnderMouse(mousePos);
+      // if (cornersUnderMouse.length > 0) {
+      //   const nearestCorner = getClosestCornerFromList(
+      //     mousePos,
+      //     cornersUnderMouse,
+      //   );
+      //   if (newWall && newCorner) {
+      //     // Clicked on the same corner
+      //     if (newWall) {
+      //       newWall.corners[1] = nearestCorner;
+      //       if (
+      //         newWall.corners[0] === newWall.corners[1] ||
+      //         walls.filter(
+      //           (wall) =>
+      //             newWall.corners.includes(wall.corners[0]) &&
+      //             newWall.corners.includes(wall.corners[1]) &&
+      //             wall !== newWall,
+      //         ).length > 0
+      //       ) {
+      //         // remove new wall from walls
+      //         setWalls(walls.filter((wall) => wall !== newWall));
+      //       }
+      //       setNewWall(null);
+      //     }
+      //     // remove new corner from corners
+      //     setCorners(corners.filter((corner) => corner !== newCorner));
+      //     setNewCorner(null);
+      //     dispatch({ type: CanvasActions.CHANGE_MODE, mode: ToolMode.NONE });
+      //   } else {
+      //     // Clicked on a new corner
+      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+      //     setNewCorner(nextCorner);
+      //     setCorners([...corners, nextCorner]);
+      //     const wall = { corners: [nearestCorner, nextCorner], thickness: 10 };
+      //     setNewWall(wall);
+      //     setWalls([...walls, wall]);
+      //   }
+      // } else {
+      //   if (newCorner) {
+      //     // Creates a new corner
+      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+      //     setNewCorner(nextCorner);
+      //     setCorners([...corners, nextCorner]);
+      //     const wall = { corners: [newCorner, nextCorner], thickness: 10 };
+      //     // setNewWall(wall);
+      //     // setWalls([...walls, wall]);
+      //   } else {
+      //     // Creates the first corner of a set
+      //     const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
+      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+      //     setNewCorner(nextCorner);
+      //     setCorners([...corners, firstCorner, nextCorner]);
+      //     const wall = { corners: [firstCorner, nextCorner], thickness: 10 };
+      //     // setNewWall(wall);
+      //     // setWalls([...walls, wall]);
+      //   }
+      // }
+    } else if (state.mode === ToolMode.CREATE_ROOM) {
+      if (newCorner) {
+        setNewRoom(null);
+        setNewCorner(null);
+        dispatch({ type: CanvasActions.CHANGE_MODE, mode: ToolMode.NONE });
       } else {
-        if (newCorner) {
-          // Creates a new corner
-          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-          setNewCorner(nextCorner);
-          setCorners([...corners, nextCorner]);
-          const wall = { corners: [newCorner, nextCorner], thickness: 10 };
-          setNewWall(wall);
-          setWalls([...walls, wall]);
-        } else {
-          // Creates the first corner of a set
-          const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
-          const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-          setNewCorner(nextCorner);
-          setCorners([...corners, firstCorner, nextCorner]);
-          const wall = { corners: [firstCorner, nextCorner], thickness: 10 };
-          setNewWall(wall);
-          setWalls([...walls, wall]);
-        }
+        // Create first corner of room
+        const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
+        const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+        setNewCorner(nextCorner);
+        setCorners([...corners, firstCorner, nextCorner]);
+        const room = { corners: [firstCorner, nextCorner] };
+        setNewRoom(room);
+        setRooms([...rooms, room]);
       }
     }
   };
@@ -177,29 +203,55 @@ const Canvas = () => {
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
-        {/* <Layer>
-      {newCorners.map((corner, index) => (
-        <Circle
-          key={index}
-          x={corner.x}
-          y={corner.y}
-          radius={20}
-          fill="blue"
-        />
-      ))}
-    </Layer> */}
         <Layer>
+          {/* Layer for walls around rooms */}
+          {rooms.map((room, index) => {
+            return (
+              <Rect
+                x={room.corners[0].x}
+                y={room.corners[0].y}
+                width={room.corners[1].x - room.corners[0].x}
+                height={room.corners[1].y - room.corners[0].y}
+                stroke="black"
+                strokeWidth={20}
+              />
+            );
+          })}
+        </Layer>
+        <Layer>
+          {/* Layer for rooms */}
+          {rooms.map((room, index) => {
+            return (
+              <Rect
+                x={room.corners[0].x}
+                y={room.corners[0].y}
+                width={room.corners[1].x - room.corners[0].x}
+                height={room.corners[1].y - room.corners[0].y}
+                fill="#AD937B"
+                stroke={"#6E655C"}
+                dash={[10, 5]}
+              />
+            );
+          })}
+        </Layer>
+        <Layer>
+          {/* Layer for movable corners of rooms */}
           {corners.map((corner, index) => (
             <Circle
               key={index}
               x={corner.x}
               y={corner.y}
               radius={RADIUS}
-              fill={selectedCorner === corner ? "purple" : "green"}
+              // fill={selectedCorner === corner ? "#435458" : undefined}
+              // opacity={selectedCorner === corner ? 0.5 : undefined}
+              stroke={selectedCorner === corner ? "#7BA3AD" : "#6E655C"}
+              dash={selectedCorner === corner ? undefined : [10, 5]}
+              // dash={[10, 5]}
             />
           ))}
         </Layer>
-        <Layer>
+
+        {/* <Layer>
           {walls.map((wall, index) => {
             return (
               <Rect
@@ -223,8 +275,8 @@ const Canvas = () => {
               />
             );
           })}
-        </Layer>
-        <Layer>
+        </Layer> */}
+        {/* <Layer>
           {corners.map((corner, index) => {
             // get walls that have this corner
             const wallsWithCorner = walls.filter((wall) =>
@@ -321,7 +373,7 @@ const Canvas = () => {
               />
             );
           })}
-        </Layer>
+        </Layer> */}
         <Layer>
           {true && (
             // Circle follows mouse

@@ -1,8 +1,8 @@
-import { AddCircle, PanToolAlt } from "@mui/icons-material";
+import { AddCircle, AddBox, PanToolAlt } from "@mui/icons-material";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
 import { CanvasActions, GlobalContext } from "./GlobalContext";
-import { Mode } from "./GlobalContext";
+import { ToolMode } from "./GlobalContext";
 
 export const Toolbox = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
@@ -20,11 +20,14 @@ export const Toolbox = () => {
           }
         }}
       >
-        <ToggleButton value={Mode.NONE}>
+        <ToggleButton value={ToolMode.NONE}>
           <PanToolAlt />
         </ToggleButton>
-        <ToggleButton value={Mode.CREATE_WALLS}>
+        {/* <ToggleButton value={Mode.CREATE_WALLS}>
           <AddCircle />
+        </ToggleButton> */}
+        <ToggleButton value={ToolMode.CREATE_ROOM}>
+          <AddBox />
         </ToggleButton>
       </ToggleButtonGroup>
     </div>
