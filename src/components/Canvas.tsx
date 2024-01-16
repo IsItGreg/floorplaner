@@ -1,10 +1,11 @@
 import Konva from "konva";
 import React from "react";
-import { Circle, Layer, Rect, Shape, Stage } from "react-konva";
+import { Circle, Layer, Rect, Text, Shape, Stage } from "react-konva";
 import { CanvasActions, GlobalContext, ToolMode } from "./GlobalContext";
 import useMeasure from "react-use-measure";
 
 const RADIUS = 30;
+const GRID = 100;
 
 // essentially vertices and edges of a graph
 type Corner = {
@@ -39,11 +40,16 @@ const Canvas = () => {
     null,
   );
 
-  const [ref, bounds] = useMeasure();
+  const [measureRef, bounds] = useMeasure();
 
   React.useEffect(() => {
     dispatch({ type: CanvasActions.SET_ROOMS, rooms });
   }, [dispatch, rooms]);
+
+  React.useEffect(() => {
+    setSelectedCorner(null);
+    setDraggingCorner(null);
+  }, [state.mode]);
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
@@ -212,8 +218,12 @@ const Canvas = () => {
     stage.position(newPos);
   };
 
+  const konvaUnitsToDistanceString = (konvaUnits: number) => {
+    return `${Math.round((Math.abs(konvaUnits) * 100) / GRID) / 100}m`;
+  };
+
   return (
-    <div ref={ref} className="canvas h-full w-full">
+    <div ref={measureRef} className="canvas h-full w-full">
       <Stage
         width={bounds.width}
         height={bounds.height}
@@ -243,16 +253,36 @@ const Canvas = () => {
         <Layer>
           {/* Layer for rooms */}
           {rooms.map((room, index) => {
+            const width = room.corners[1].x - room.corners[0].x;
+            const height = room.corners[1].y - room.corners[0].y;
+
             return (
-              <Rect
-                x={room.corners[0].x}
-                y={room.corners[0].y}
-                width={room.corners[1].x - room.corners[0].x}
-                height={room.corners[1].y - room.corners[0].y}
-                fill="#AD937B"
-                stroke={"#6E655C"}
-                dash={[10, 5]}
-              />
+              <>
+                <Rect
+                  x={room.corners[0].x}
+                  y={room.corners[0].y}
+                  width={room.corners[1].x - room.corners[0].x}
+                  height={room.corners[1].y - room.corners[0].y}
+                  fill="#AD937B"
+                  stroke={"#6E655C"}
+                  dash={[10, 5]}
+                />
+                <Text
+                  x={room.corners[0].x + width / 2}
+                  y={room.corners[0].y + (height > 0 ? 0 : height) + 5}
+                  text={konvaUnitsToDistanceString(width)}
+                  fontSize={20}
+                  fill="#6E655C"
+                />
+                <Text
+                  x={room.corners[0].x + (width > 0 ? 0 : width) + 5}
+                  y={room.corners[0].y + height / 2 + 20}
+                  rotation={-90}
+                  text={konvaUnitsToDistanceString(height)}
+                  fontSize={20}
+                  fill="#6E655C"
+                />
+              </>
             );
           })}
         </Layer>
