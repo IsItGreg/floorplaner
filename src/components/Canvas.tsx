@@ -113,6 +113,11 @@ const Canvas = () => {
         );
         if (selectedCorner !== nearestCorner) {
           setSelectedCorner(nearestCorner);
+          // const selectedCornersRoom = rooms.splice( // Makes the selected room appear on top of other rooms
+          //   rooms.findIndex((room) => room.corners.includes(nearestCorner)),
+          //   1,
+          // )[0];
+          // setRooms([...rooms, selectedCornersRoom]);
         }
         setDraggingCorner(nearestCorner);
       } else {
@@ -264,6 +269,41 @@ const Canvas = () => {
                   width={room.corners[1].x - room.corners[0].x}
                   height={room.corners[1].y - room.corners[0].y}
                   fill="#AD937B"
+                  stroke={"#6E655C"}
+                  dash={[10, 5]}
+                />
+                <Text
+                  x={room.corners[0].x + width / 2}
+                  y={room.corners[0].y + (height > 0 ? 0 : height) + 5}
+                  text={konvaUnitsToDistanceString(width)}
+                  fontSize={20}
+                  fill="#6E655C"
+                />
+                <Text
+                  x={room.corners[0].x + (width > 0 ? 0 : width) + 5}
+                  y={room.corners[0].y + height / 2 + 20}
+                  rotation={-90}
+                  text={konvaUnitsToDistanceString(height)}
+                  fontSize={20}
+                  fill="#6E655C"
+                />
+              </>
+            );
+          })}
+        </Layer>
+        <Layer>
+          {/* Layer for room lines and distances */}
+          {rooms.map((room, index) => {
+            const width = room.corners[1].x - room.corners[0].x;
+            const height = room.corners[1].y - room.corners[0].y;
+
+            return (
+              <>
+                <Rect
+                  x={room.corners[0].x}
+                  y={room.corners[0].y}
+                  width={room.corners[1].x - room.corners[0].x}
+                  height={room.corners[1].y - room.corners[0].y}
                   stroke={"#6E655C"}
                   dash={[10, 5]}
                 />
