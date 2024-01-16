@@ -1,4 +1,10 @@
-import { AddCircle, AddBox, PanToolAlt, PanTool } from "@mui/icons-material";
+import {
+  AddCircle,
+  AddBox,
+  PanToolAlt,
+  PanTool,
+  Anchor,
+} from "@mui/icons-material";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
 import { CanvasActions, GlobalContext } from "./GlobalContext";
@@ -8,7 +14,7 @@ export const Toolbox = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
 
   return (
-    <div className="absolute top-3 ml-4">
+    <div className="absolute top-3 ml-4 flex flex-col gap-2">
       <ToggleButtonGroup
         className="bg-white"
         orientation="vertical"
@@ -31,6 +37,21 @@ export const Toolbox = () => {
         </ToggleButton> */}
         <ToggleButton value={ToolMode.CREATE_ROOM}>
           <AddBox />
+        </ToggleButton>
+      </ToggleButtonGroup>
+
+      <ToggleButtonGroup
+        className="bg-white"
+        orientation="vertical"
+        value={state.snapRooms ? ["snap_on"] : []}
+      >
+        <ToggleButton
+          onClick={() => {
+            dispatch({ type: CanvasActions.TOGGLE_SNAP_ROOMS });
+          }}
+          value={"snap_on"}
+        >
+          <Anchor />
         </ToggleButton>
       </ToggleButtonGroup>
     </div>

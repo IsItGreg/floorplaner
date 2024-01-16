@@ -40,6 +40,9 @@ const Canvas = () => {
     null,
   );
 
+  const [xSnappingPoints, setXSnappingPoints] = React.useState<number[]>([]);
+  const [ySnappingPoints, setYSnappingPoints] = React.useState<number[]>([]);
+
   const [measureRef, bounds] = useMeasure();
 
   React.useEffect(() => {
@@ -54,22 +57,58 @@ const Canvas = () => {
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
     const mousePos = stage.getRelativePointerPosition();
-    setCirclePosition({ x: mousePos.x, y: mousePos.y });
+
+    const nearestSnapX =
+      xSnappingPoints.length > 0
+        ? xSnappingPoints.reduce((prev, curr) => {
+            return Math.abs(curr - mousePos.x) < Math.abs(prev - mousePos.x)
+              ? curr
+              : prev;
+          })
+        : null;
+
+    const nearestSnapY =
+      ySnappingPoints.length > 0
+        ? ySnappingPoints.reduce((prev, curr) => {
+            return Math.abs(curr - mousePos.y) < Math.abs(prev - mousePos.y)
+              ? curr
+              : prev;
+          })
+        : null;
+
+    const shouldSnap = state.snapRooms !== e.evt.shiftKey;
+
+    const shouldSnapX =
+      shouldSnap &&
+      nearestSnapX !== null &&
+      Math.abs(mousePos.x - nearestSnapX) < 10;
+    const shouldSnapY =
+      shouldSnap &&
+      nearestSnapY !== null &&
+      Math.abs(mousePos.y - nearestSnapY) < 10;
+
+    const newXPos = shouldSnapX ? nearestSnapX : mousePos.x;
+    const newYPos = shouldSnapY ? nearestSnapY : mousePos.y;
+
+    setCirclePosition({
+      x: newXPos,
+      y: newYPos,
+    });
 
     if (state.mode === ToolMode.NONE) {
       if (draggingCorner) {
-        draggingCorner.x = mousePos.x;
-        draggingCorner.y = mousePos.y;
+        draggingCorner.x = newXPos;
+        draggingCorner.y = newYPos;
       }
-    } else if (state.mode === ToolMode.CREATE_WALLS) {
-      if (newCorner) {
-        newCorner.x = mousePos.x;
-        newCorner.y = mousePos.y;
-      }
+      // } else if (state.mode === ToolMode.CREATE_WALLS) {
+      //   if (newCorner) {
+      //     newCorner.x = mousePos.x;
+      //     newCorner.y = mousePos.y;
+      //   }
     } else if (state.mode === ToolMode.CREATE_ROOM) {
       if (newCorner) {
-        newCorner.x = mousePos.x;
-        newCorner.y = mousePos.y;
+        newCorner.x = newXPos;
+        newCorner.y = newYPos;
       }
     }
   };
@@ -202,6 +241,31 @@ const Canvas = () => {
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (draggingCorner) {
       setDraggingCorner(null);
+
+      const newXSnappingPoints = rooms.flatMap((room) => {
+        const possible = room.corners
+          .filter((corner) => corner !== selectedCorner)
+          .flatMap((corner) => [corner.x - 10, corner.x, corner.x + 10]);
+        return possible.filter(
+          (x) =>
+            room.corners.every((corner) => corner.x <= x) ||
+            room.corners.every((corner) => corner.x >= x),
+        );
+      });
+
+      const newYSnappingPoints = rooms.flatMap((room) => {
+        const possible = room.corners
+          .filter((corner) => corner !== selectedCorner)
+          .flatMap((corner) => [corner.y - 10, corner.y, corner.y + 10]);
+        return possible.filter(
+          (y) =>
+            room.corners.every((corner) => corner.y <= y) ||
+            room.corners.every((corner) => corner.y >= y),
+        );
+      });
+
+      setXSnappingPoints(newXSnappingPoints);
+      setYSnappingPoints(newYSnappingPoints);
     }
   };
 

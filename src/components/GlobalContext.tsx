@@ -10,12 +10,14 @@ export enum ToolMode {
 
 export type AppState = {
   mode: ToolMode;
+  snapRooms: boolean;
   walls: Wall[];
   rooms: Room[];
 };
 
 const initialState = {
   mode: ToolMode.NONE,
+  snapRooms: true,
   walls: [],
   rooms: [],
 };
@@ -24,7 +26,7 @@ export const GlobalContext = createContext<{
   state: AppState;
   dispatch: Dispatch<CanvasAction>;
 }>({
-  state: { mode: ToolMode.NONE, walls: [], rooms: [] },
+  state: { mode: ToolMode.NONE, snapRooms: true, walls: [], rooms: [] },
   dispatch: () => null,
 });
 
@@ -44,12 +46,14 @@ export const GlobalContextProvider = ({
 
 export enum CanvasActions {
   CHANGE_MODE,
+  TOGGLE_SNAP_ROOMS,
   SET_WALLS,
   SET_ROOMS,
 }
 
 export type CanvasAction =
   | { type: CanvasActions.CHANGE_MODE; mode: ToolMode }
+  | { type: CanvasActions.TOGGLE_SNAP_ROOMS }
   | { type: CanvasActions.SET_WALLS; walls: Wall[] }
   | { type: CanvasActions.SET_ROOMS; rooms: Room[] };
 
@@ -57,6 +61,8 @@ const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
     case CanvasActions.CHANGE_MODE:
       return { ...state, mode: action.mode };
+    case CanvasActions.TOGGLE_SNAP_ROOMS:
+      return { ...state, snapRooms: !state.snapRooms };
     case CanvasActions.SET_WALLS:
       return { ...state, walls: action.walls };
     case CanvasActions.SET_ROOMS:
