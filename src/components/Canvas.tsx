@@ -12,6 +12,7 @@ type Corner = {
   x: number;
   y: number;
   color?: string;
+  small?: boolean;
 };
 
 export type Wall = {
@@ -19,8 +20,15 @@ export type Wall = {
   thickness: number;
 };
 
-export type Room = {
+export enum BoxType {
+  ROOM,
+  DOOR,
+  WINDOW,
+}
+
+export type Box = {
   corners: Corner[]; // 2 corners
+  type: BoxType;
 };
 
 const Canvas = () => {
@@ -30,8 +38,8 @@ const Canvas = () => {
   const [corners, setCorners] = React.useState<Corner[]>([]);
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
 
-  const [rooms, setRooms] = React.useState<Room[]>([]);
-  const [newRoom, setNewRoom] = React.useState<Room | null>(null);
+  const [boxes, setBoxes] = React.useState<Box[]>([]);
+  const [newBox, setNewBox] = React.useState<Box | null>(null);
 
   const [selectedCorner, setSelectedCorner] = React.useState<Corner | null>(
     null,
@@ -45,9 +53,13 @@ const Canvas = () => {
 
   const [measureRef, bounds] = useMeasure();
 
+  const rooms = boxes.filter((box) => box.type === BoxType.ROOM);
+  const doors = boxes.filter((box) => box.type === BoxType.DOOR);
+  const windows = boxes.filter((box) => box.type === BoxType.WINDOW);
+
   React.useEffect(() => {
-    dispatch({ type: CanvasActions.SET_ROOMS, rooms });
-  }, [dispatch, rooms]);
+    dispatch({ type: CanvasActions.SET_ROOMS, rooms: boxes });
+  }, [dispatch, boxes]);
 
   React.useEffect(() => {
     setSelectedCorner(null);
@@ -100,12 +112,11 @@ const Canvas = () => {
         draggingCorner.x = newXPos;
         draggingCorner.y = newYPos;
       }
-      // } else if (state.mode === ToolMode.CREATE_WALLS) {
-      //   if (newCorner) {
-      //     newCorner.x = mousePos.x;
-      //     newCorner.y = mousePos.y;
-      //   }
-    } else if (state.mode === ToolMode.CREATE_ROOM) {
+    } else if (
+      state.mode === ToolMode.CREATE_ROOM ||
+      state.mode === ToolMode.CREATE_DOOR ||
+      state.mode === ToolMode.CREATE_WINDOW
+    ) {
       if (newCorner) {
         newCorner.x = newXPos;
         newCorner.y = newYPos;
@@ -162,78 +173,41 @@ const Canvas = () => {
       } else {
         setSelectedCorner(null);
       }
-    } else if (state.mode === ToolMode.CREATE_WALLS) {
-      // const cornersUnderMouse = getCornersUnderMouse(mousePos);
-      // if (cornersUnderMouse.length > 0) {
-      //   const nearestCorner = getClosestCornerFromList(
-      //     mousePos,
-      //     cornersUnderMouse,
-      //   );
-      //   if (newWall && newCorner) {
-      //     // Clicked on the same corner
-      //     if (newWall) {
-      //       newWall.corners[1] = nearestCorner;
-      //       if (
-      //         newWall.corners[0] === newWall.corners[1] ||
-      //         walls.filter(
-      //           (wall) =>
-      //             newWall.corners.includes(wall.corners[0]) &&
-      //             newWall.corners.includes(wall.corners[1]) &&
-      //             wall !== newWall,
-      //         ).length > 0
-      //       ) {
-      //         // remove new wall from walls
-      //         setWalls(walls.filter((wall) => wall !== newWall));
-      //       }
-      //       setNewWall(null);
-      //     }
-      //     // remove new corner from corners
-      //     setCorners(corners.filter((corner) => corner !== newCorner));
-      //     setNewCorner(null);
-      //     dispatch({ type: CanvasActions.CHANGE_MODE, mode: ToolMode.NONE });
-      //   } else {
-      //     // Clicked on a new corner
-      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-      //     setNewCorner(nextCorner);
-      //     setCorners([...corners, nextCorner]);
-      //     const wall = { corners: [nearestCorner, nextCorner], thickness: 10 };
-      //     setNewWall(wall);
-      //     setWalls([...walls, wall]);
-      //   }
-      // } else {
-      //   if (newCorner) {
-      //     // Creates a new corner
-      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-      //     setNewCorner(nextCorner);
-      //     setCorners([...corners, nextCorner]);
-      //     const wall = { corners: [newCorner, nextCorner], thickness: 10 };
-      //     // setNewWall(wall);
-      //     // setWalls([...walls, wall]);
-      //   } else {
-      //     // Creates the first corner of a set
-      //     const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
-      //     const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
-      //     setNewCorner(nextCorner);
-      //     setCorners([...corners, firstCorner, nextCorner]);
-      //     const wall = { corners: [firstCorner, nextCorner], thickness: 10 };
-      //     // setNewWall(wall);
-      //     // setWalls([...walls, wall]);
-      //   }
-      // }
-    } else if (state.mode === ToolMode.CREATE_ROOM) {
+    } else if (
+      state.mode === ToolMode.CREATE_ROOM ||
+      state.mode === ToolMode.CREATE_DOOR ||
+      state.mode === ToolMode.CREATE_WINDOW
+    ) {
       if (newCorner) {
-        setNewRoom(null);
+        setNewBox(null);
         setNewCorner(null);
         dispatch({ type: CanvasActions.CHANGE_MODE, mode: ToolMode.NONE });
       } else {
         // Create first corner of room
-        const firstCorner: Corner = { x: mousePos.x, y: mousePos.y };
-        const nextCorner: Corner = { x: mousePos.x, y: mousePos.y };
+        const firstCorner: Corner = {
+          x: mousePos.x,
+          y: mousePos.y,
+          small: state.mode !== ToolMode.CREATE_ROOM,
+        };
+        const nextCorner: Corner = {
+          x: mousePos.x,
+          y: mousePos.y,
+          small: state.mode !== ToolMode.CREATE_ROOM,
+        };
         setNewCorner(nextCorner);
         setCorners([...corners, firstCorner, nextCorner]);
-        const room = { corners: [firstCorner, nextCorner] };
-        setNewRoom(room);
-        setRooms([...rooms, room]);
+        const roomType =
+          state.mode === ToolMode.CREATE_ROOM
+            ? BoxType.ROOM
+            : state.mode === ToolMode.CREATE_DOOR
+              ? BoxType.DOOR
+              : BoxType.WINDOW;
+        const room = {
+          corners: [firstCorner, nextCorner],
+          type: roomType,
+        };
+        setNewBox(room);
+        setBoxes([...boxes, room]);
       }
     }
   };
@@ -242,7 +216,7 @@ const Canvas = () => {
     if (draggingCorner) {
       setDraggingCorner(null);
 
-      const newXSnappingPoints = rooms.flatMap((room) => {
+      const newXSnappingPoints = boxes.flatMap((room) => {
         const possible = room.corners
           .filter((corner) => corner !== selectedCorner)
           .flatMap((corner) => [corner.x - 10, corner.x, corner.x + 10]);
@@ -253,7 +227,7 @@ const Canvas = () => {
         );
       });
 
-      const newYSnappingPoints = rooms.flatMap((room) => {
+      const newYSnappingPoints = boxes.flatMap((room) => {
         const possible = room.corners
           .filter((corner) => corner !== selectedCorner)
           .flatMap((corner) => [corner.y - 10, corner.y, corner.y + 10]);
@@ -333,8 +307,6 @@ const Canvas = () => {
                   width={room.corners[1].x - room.corners[0].x}
                   height={room.corners[1].y - room.corners[0].y}
                   fill="#AD937B"
-                  stroke={"#6E655C"}
-                  dash={[10, 5]}
                 />
                 <Text
                   x={room.corners[0].x + width / 2}
@@ -351,6 +323,85 @@ const Canvas = () => {
                   fontSize={20}
                   fill="#6E655C"
                 />
+              </>
+            );
+          })}
+        </Layer>
+        <Layer>
+          {/* Layer for doors and windows */}
+          {windows.map((window, index) => {
+            const width = window.corners[1].x - window.corners[0].x;
+            const height = window.corners[1].y - window.corners[0].y;
+
+            const isHorizontal = Math.abs(width) > Math.abs(height);
+
+            return (
+              <>
+                <Rect
+                  x={window.corners[0].x}
+                  y={window.corners[0].y}
+                  width={window.corners[1].x - window.corners[0].x}
+                  height={window.corners[1].y - window.corners[0].y}
+                  fill="#9DAACF"
+                  stroke="black"
+                  strokeWidth={2}
+                />
+                {isHorizontal ? (
+                  <Text
+                    x={window.corners[0].x + width / 2 - 20}
+                    y={window.corners[0].y + (height > 0 ? 0 : height) + 1}
+                    text={konvaUnitsToDistanceString(width)}
+                    fontSize={9}
+                    fill="#33281E"
+                  />
+                ) : (
+                  <Text
+                    x={window.corners[0].x + (width > 0 ? 0 : width) + 1}
+                    y={window.corners[0].y + height / 2 + 20}
+                    rotation={-90}
+                    text={konvaUnitsToDistanceString(height)}
+                    fontSize={9}
+                    fill="#33281E"
+                  />
+                )}
+              </>
+            );
+          })}
+          {doors.map((door, index) => {
+            const width = door.corners[1].x - door.corners[0].x;
+            const height = door.corners[1].y - door.corners[0].y;
+
+            const isHorizontal = Math.abs(width) > Math.abs(height);
+
+            return (
+              <>
+                <Rect
+                  x={door.corners[0].x}
+                  y={door.corners[0].y}
+                  width={door.corners[1].x - door.corners[0].x}
+                  height={door.corners[1].y - door.corners[0].y}
+                  fill="#72AD83"
+                  stroke="black"
+                  strokeWidth={2}
+                />
+                {isHorizontal ? (
+                  <Text
+                    x={door.corners[0].x + width / 2 - 20}
+                    y={door.corners[0].y + (height > 0 ? 0 : height) + 1}
+                    text={konvaUnitsToDistanceString(width)}
+                    fontSize={9}
+                    fill="#33281E"
+                  />
+                ) : (
+                  <Text
+                    x={door.corners[0].x + (width > 0 ? 0 : width) + 1}
+                    y={door.corners[0].y + height / 2 + 20}
+                    rotation={-90}
+                    text={konvaUnitsToDistanceString(height)}
+                    fontSize={9}
+                    fill="#33281E"
+                  />
+                )}
               </>
             );
           })}
@@ -369,14 +420,14 @@ const Canvas = () => {
                   width={room.corners[1].x - room.corners[0].x}
                   height={room.corners[1].y - room.corners[0].y}
                   stroke={"#6E655C"}
-                  dash={[10, 5]}
+                  dash={[10, 15]}
                 />
                 <Text
                   x={room.corners[0].x + width / 2}
                   y={room.corners[0].y + (height > 0 ? 0 : height) + 5}
                   text={konvaUnitsToDistanceString(width)}
                   fontSize={20}
-                  fill="#6E655C"
+                  fill="#33281E"
                 />
                 <Text
                   x={room.corners[0].x + (width > 0 ? 0 : width) + 5}
@@ -384,7 +435,7 @@ const Canvas = () => {
                   rotation={-90}
                   text={konvaUnitsToDistanceString(height)}
                   fontSize={20}
-                  fill="#6E655C"
+                  fill="#33281E"
                 />
               </>
             );
@@ -397,7 +448,7 @@ const Canvas = () => {
               key={index}
               x={corner.x}
               y={corner.y}
-              radius={RADIUS}
+              radius={corner.small ? RADIUS / 2 : RADIUS}
               // fill={selectedCorner === corner ? "#435458" : undefined}
               // opacity={selectedCorner === corner ? 0.5 : undefined}
               stroke={selectedCorner === corner ? "#7BA3AD" : "#6E655C"}
@@ -406,130 +457,6 @@ const Canvas = () => {
             />
           ))}
         </Layer>
-
-        {/* <Layer>
-          {walls.map((wall, index) => {
-            return (
-              <Rect
-                key={index}
-                offsetY={wall.thickness / 2}
-                x={wall.corners[0].x}
-                y={wall.corners[0].y}
-                width={Math.sqrt(
-                  Math.pow(wall.corners[1].x - wall.corners[0].x, 2) +
-                    Math.pow(wall.corners[1].y - wall.corners[0].y, 2),
-                )}
-                height={wall.thickness}
-                fill="black"
-                rotation={
-                  Math.atan2(
-                    wall.corners[1].y - wall.corners[0].y,
-                    wall.corners[1].x - wall.corners[0].x,
-                  ) *
-                  (180 / Math.PI)
-                }
-              />
-            );
-          })}
-        </Layer> */}
-        {/* <Layer>
-          {corners.map((corner, index) => {
-            // get walls that have this corner
-            const wallsWithCorner = walls.filter((wall) =>
-              wall.corners.includes(corner),
-            );
-
-            // dont continue if there is less than two walls
-            if (wallsWithCorner.length < 2) return null;
-
-            // map walls to know the positive angle of the wall away from the other corner
-            const wallsAndAngles = wallsWithCorner.map((wall) => {
-              const otherCorner = wall.corners.filter((c) => c !== corner)[0];
-              const angle = Math.atan2(
-                otherCorner.y - corner.y,
-                otherCorner.x - corner.x,
-              );
-              return { wall, angle: angle < 0 ? angle + 2 * Math.PI : angle };
-            });
-
-            // sort the angles
-            const sortedWallsAndAngles = wallsAndAngles.sort(
-              (a, b) => a.angle - b.angle,
-            );
-
-            // add firt angle + 2pi to end of array
-            sortedWallsAndAngles.push({
-              ...sortedWallsAndAngles[0],
-              angle: sortedWallsAndAngles[0].angle + 2 * Math.PI,
-            });
-
-            // find the two consecutive walls that have an angle of more than pi between them
-            const wallsAndAnglesWithGaps = sortedWallsAndAngles
-              .map((wA, index) => {
-                return {
-                  wA,
-                  nextWA:
-                    sortedWallsAndAngles[index + 1] || sortedWallsAndAngles[0],
-                };
-              })
-              .filter(({ wA, nextWA }) => nextWA.angle - wA.angle > Math.PI);
-
-            // if there are no gaps, return null
-            if (wallsAndAnglesWithGaps.length === 0) return null;
-
-            const leftPoint = {
-              x:
-                corner.x +
-                (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
-                  Math.cos(wallsAndAnglesWithGaps[0].wA.angle + Math.PI / 2),
-              y:
-                corner.y +
-                (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
-                  Math.sin(wallsAndAnglesWithGaps[0].wA.angle + Math.PI / 2),
-            };
-
-            const rightPoint = {
-              x:
-                corner.x +
-                (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
-                  Math.cos(
-                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2,
-                  ),
-              y:
-                corner.y +
-                (wallsAndAnglesWithGaps[0].wA.wall.thickness / 2) *
-                  Math.sin(
-                    wallsAndAnglesWithGaps[0].nextWA.angle - Math.PI / 2,
-                  ),
-            };
-
-            // find intersection of lines extending from left and right points
-            const m1 = Math.tan(wallsAndAnglesWithGaps[0].wA.angle);
-            const m2 = Math.tan(wallsAndAnglesWithGaps[0].nextWA.angle);
-            const x =
-              (m1 * leftPoint.x -
-                m2 * rightPoint.x +
-                rightPoint.y -
-                leftPoint.y) /
-              (m1 - m2);
-            const y = m1 * (x - leftPoint.x) + leftPoint.y;
-
-            return (
-              <Shape
-                sceneFunc={(context, shape) => {
-                  context.beginPath();
-                  context.moveTo(leftPoint.x, leftPoint.y);
-                  context.lineTo(x, y);
-                  context.lineTo(rightPoint.x, rightPoint.y);
-                  context.lineTo(corner.x, corner.y);
-                  context.closePath();
-                  context.fillStrokeShape(shape);
-                }}
-                fill="red"
-              />
-            );
-          })}
-        </Layer> */}
         <Layer>
           {true && (
             // Circle follows mouse

@@ -4,6 +4,8 @@ import {
   PanToolAlt,
   PanTool,
   Anchor,
+  DoorFront,
+  Window,
 } from "@mui/icons-material";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
@@ -37,6 +39,12 @@ export const Toolbox = () => {
         </ToggleButton> */}
         <ToggleButton value={ToolMode.CREATE_ROOM}>
           <AddBox />
+        </ToggleButton>
+        <ToggleButton value={ToolMode.CREATE_DOOR}>
+          <DoorFront />
+        </ToggleButton>
+        <ToggleButton value={ToolMode.CREATE_WINDOW}>
+          <Window />
         </ToggleButton>
       </ToggleButtonGroup>
 

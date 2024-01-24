@@ -1,18 +1,20 @@
 import { Dispatch, createContext, useReducer } from "react";
-import { Room, Wall } from "./Canvas";
+import { Box, Wall } from "./Canvas";
 
 export enum ToolMode {
   NONE = "none",
   PAN = "pan",
   CREATE_WALLS = "create_walls",
   CREATE_ROOM = "create_room",
+  CREATE_DOOR = "create_door",
+  CREATE_WINDOW = "create_window",
 }
 
 export type AppState = {
   mode: ToolMode;
   snapRooms: boolean;
   walls: Wall[];
-  rooms: Room[];
+  rooms: Box[];
 };
 
 const initialState = {
@@ -55,7 +57,7 @@ export type CanvasAction =
   | { type: CanvasActions.CHANGE_MODE; mode: ToolMode }
   | { type: CanvasActions.TOGGLE_SNAP_ROOMS }
   | { type: CanvasActions.SET_WALLS; walls: Wall[] }
-  | { type: CanvasActions.SET_ROOMS; rooms: Room[] };
+  | { type: CanvasActions.SET_ROOMS; rooms: Box[] };
 
 const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
