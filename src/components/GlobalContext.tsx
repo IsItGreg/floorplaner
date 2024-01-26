@@ -51,13 +51,15 @@ export enum CanvasActions {
   TOGGLE_SNAP_ROOMS,
   SET_WALLS,
   SET_ROOMS,
+  CLEAR_CANVAS,
 }
 
 export type CanvasAction =
   | { type: CanvasActions.CHANGE_MODE; mode: ToolMode }
   | { type: CanvasActions.TOGGLE_SNAP_ROOMS }
   | { type: CanvasActions.SET_WALLS; walls: Wall[] }
-  | { type: CanvasActions.SET_ROOMS; rooms: Box[] };
+  | { type: CanvasActions.SET_ROOMS; rooms: Box[] }
+  | { type: CanvasActions.CLEAR_CANVAS };
 
 const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
@@ -69,6 +71,8 @@ const canvasReducer = (state: any, action: CanvasAction) => {
       return { ...state, walls: action.walls };
     case CanvasActions.SET_ROOMS:
       return { ...state, rooms: action.rooms };
+    case CanvasActions.CLEAR_CANVAS:
+      return { ...state, walls: [], rooms: [] };
     default:
       return state;
   }

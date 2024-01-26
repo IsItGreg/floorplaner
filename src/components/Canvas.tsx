@@ -1,5 +1,5 @@
 import Konva from "konva";
-import React from "react";
+import React, { useEffect } from "react";
 import { Circle, Layer, Rect, Text, Shape, Stage } from "react-konva";
 import { CanvasActions, GlobalContext, ToolMode } from "./GlobalContext";
 import useMeasure from "react-use-measure";
@@ -34,11 +34,20 @@ export type Box = {
 const Canvas = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
 
+  const [boxes, setBoxes] = React.useState<Box[]>(state.rooms);
+  const [corners, setCorners] = React.useState<Corner[]>(
+    state.rooms.flatMap((room) => room.corners),
+  );
+
+  useEffect(() => {
+    setBoxes(state.rooms);
+    setCorners(state.rooms.flatMap((room) => room.corners));
+  }, [state.rooms]);
+
   const [circlePosition, setCirclePosition] = React.useState({ x: 0, y: 0 });
-  const [corners, setCorners] = React.useState<Corner[]>([]);
+
   const [newCorner, setNewCorner] = React.useState<Corner | null>(null);
 
-  const [boxes, setBoxes] = React.useState<Box[]>([]);
   const [newBox, setNewBox] = React.useState<Box | null>(null);
 
   const [selectedCorner, setSelectedCorner] = React.useState<Corner | null>(
