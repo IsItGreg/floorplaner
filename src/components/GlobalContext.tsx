@@ -1,5 +1,5 @@
 import { Dispatch, createContext, useReducer } from "react";
-import { Box, Wall } from "./Canvas";
+import { Box, Corner, Wall } from "./Canvas";
 
 export enum ToolMode {
   NONE = "none",
@@ -15,6 +15,7 @@ export type AppState = {
   snapRooms: boolean;
   walls: Wall[];
   rooms: Box[];
+  selectedCorner?: Corner;
 };
 
 const initialState = {
@@ -51,6 +52,8 @@ export enum CanvasActions {
   TOGGLE_SNAP_ROOMS,
   SET_WALLS,
   SET_ROOMS,
+  SELECT_CORNER,
+  DELETE_SELECTED_CORNER,
   CLEAR_CANVAS,
 }
 
@@ -59,7 +62,9 @@ export type CanvasAction =
   | { type: CanvasActions.TOGGLE_SNAP_ROOMS }
   | { type: CanvasActions.SET_WALLS; walls: Wall[] }
   | { type: CanvasActions.SET_ROOMS; rooms: Box[] }
-  | { type: CanvasActions.CLEAR_CANVAS };
+  | { type: CanvasActions.CLEAR_CANVAS }
+  | { type: CanvasActions.SELECT_CORNER; corner: Corner | null }
+  | { type: CanvasActions.DELETE_SELECTED_CORNER };
 
 const canvasReducer = (state: any, action: CanvasAction) => {
   switch (action.type) {
@@ -73,6 +78,16 @@ const canvasReducer = (state: any, action: CanvasAction) => {
       return { ...state, rooms: action.rooms };
     case CanvasActions.CLEAR_CANVAS:
       return { ...state, walls: [], rooms: [] };
+    case CanvasActions.SELECT_CORNER:
+      return { ...state, selectedCorner: action.corner };
+    case CanvasActions.DELETE_SELECTED_CORNER:
+      return {
+        ...state,
+        rooms: state.rooms.filter(
+          (room: Box) => !room.corners.includes(state.selectedCorner),
+        ),
+        selectedCorner: null,
+      };
     default:
       return state;
   }

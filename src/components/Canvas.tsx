@@ -8,7 +8,7 @@ const RADIUS = 30;
 const GRID = 100;
 
 // essentially vertices and edges of a graph
-type Corner = {
+export type Corner = {
   x: number;
   y: number;
   color?: string;
@@ -74,6 +74,13 @@ const Canvas = () => {
     setSelectedCorner(null);
     setDraggingCorner(null);
   }, [state.mode]);
+
+  React.useEffect(() => {
+    dispatch({
+      type: CanvasActions.SELECT_CORNER,
+      corner: selectedCorner,
+    });
+  }, [selectedCorner, dispatch]);
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage()!;
@@ -172,11 +179,12 @@ const Canvas = () => {
         );
         if (selectedCorner !== nearestCorner) {
           setSelectedCorner(nearestCorner);
-          // const selectedCornersRoom = rooms.splice( // Makes the selected room appear on top of other rooms
-          //   rooms.findIndex((room) => room.corners.includes(nearestCorner)),
-          //   1,
-          // )[0];
-          // setRooms([...rooms, selectedCornersRoom]);
+          const selectedCornersRoom = boxes.splice(
+            // Makes the selected room appear on top of other rooms
+            boxes.findIndex((box) => box.corners.includes(nearestCorner)),
+            1,
+          )[0];
+          setBoxes([...boxes, selectedCornersRoom]);
         }
         setDraggingCorner(nearestCorner);
       } else {
@@ -421,6 +429,9 @@ const Canvas = () => {
             const width = room.corners[1].x - room.corners[0].x;
             const height = room.corners[1].y - room.corners[0].y;
 
+            const isSelected =
+              selectedCorner && room.corners.includes(selectedCorner);
+
             return (
               <>
                 <Rect
@@ -428,15 +439,15 @@ const Canvas = () => {
                   y={room.corners[0].y}
                   width={room.corners[1].x - room.corners[0].x}
                   height={room.corners[1].y - room.corners[0].y}
-                  stroke={"#6E655C"}
-                  dash={[10, 15]}
+                  stroke={isSelected ? "#7BA3AD" : "#6E655C"}
+                  dash={isSelected ? [] : [10, 15]}
                 />
                 <Text
                   x={room.corners[0].x + width / 2}
                   y={room.corners[0].y + (height > 0 ? 0 : height) + 5}
                   text={konvaUnitsToDistanceString(width)}
                   fontSize={20}
-                  fill="#33281E"
+                  fill={isSelected ? "#56757D" : "#33281E"}
                 />
                 <Text
                   x={room.corners[0].x + (width > 0 ? 0 : width) + 5}
@@ -444,7 +455,7 @@ const Canvas = () => {
                   rotation={-90}
                   text={konvaUnitsToDistanceString(height)}
                   fontSize={20}
-                  fill="#33281E"
+                  fill={isSelected ? "#56757D" : "#33281E"}
                 />
               </>
             );

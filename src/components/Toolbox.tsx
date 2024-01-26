@@ -6,8 +6,9 @@ import {
   Anchor,
   DoorFront,
   Window,
+  Backspace,
 } from "@mui/icons-material";
-import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
 import React from "react";
 import { CanvasActions, GlobalContext } from "./GlobalContext";
 import { ToolMode } from "./GlobalContext";
@@ -18,7 +19,7 @@ export const Toolbox = () => {
   return (
     <div className="absolute top-3 ml-4 flex flex-col gap-2">
       <ToggleButtonGroup
-        className="bg-white"
+        className="bg-white shadow"
         orientation="vertical"
         value={state.mode}
         exclusive
@@ -37,30 +38,57 @@ export const Toolbox = () => {
         {/* <ToggleButton value={Mode.CREATE_WALLS}>
           <AddCircle />
         </ToggleButton> */}
-        <ToggleButton value={ToolMode.CREATE_ROOM}>
-          <AddBox />
-        </ToggleButton>
-        <ToggleButton value={ToolMode.CREATE_DOOR}>
-          <DoorFront />
-        </ToggleButton>
-        <ToggleButton value={ToolMode.CREATE_WINDOW}>
-          <Window />
-        </ToggleButton>
+        <Tooltip title="Create room" arrow placement="right">
+          <ToggleButton value={ToolMode.CREATE_ROOM}>
+            <AddBox />
+          </ToggleButton>
+        </Tooltip>
+        <Tooltip title="Create door" arrow placement="right">
+          <ToggleButton value={ToolMode.CREATE_DOOR}>
+            <DoorFront />
+          </ToggleButton>
+        </Tooltip>
+        <Tooltip title="Create window" arrow placement="right">
+          <ToggleButton value={ToolMode.CREATE_WINDOW}>
+            <Window />
+          </ToggleButton>
+        </Tooltip>
       </ToggleButtonGroup>
 
       <ToggleButtonGroup
-        className="bg-white"
+        className="bg-white shadow"
         orientation="vertical"
         value={state.snapRooms ? ["snap_on"] : []}
       >
-        <ToggleButton
-          onClick={() => {
-            dispatch({ type: CanvasActions.TOGGLE_SNAP_ROOMS });
-          }}
-          value={"snap_on"}
+        <Tooltip
+          title="Toggle snapping (hold shift to temporarily reverse)"
+          arrow
+          placement="right"
         >
-          <Anchor />
-        </ToggleButton>
+          <ToggleButton
+            onClick={() => {
+              dispatch({ type: CanvasActions.TOGGLE_SNAP_ROOMS });
+            }}
+            value={"snap_on"}
+          >
+            <Anchor />
+          </ToggleButton>
+        </Tooltip>
+        <Tooltip
+          title="Delete selected corner and attached box"
+          arrow
+          placement="right"
+        >
+          <ToggleButton
+            value={"delete_corner"}
+            disabled={state.selectedCorner === null}
+            onClick={() => {
+              dispatch({ type: CanvasActions.DELETE_SELECTED_CORNER });
+            }}
+          >
+            <Backspace />
+          </ToggleButton>
+        </Tooltip>
       </ToggleButtonGroup>
     </div>
   );
