@@ -38,21 +38,24 @@ export const Toolbox = () => {
         {/* <ToggleButton value={Mode.CREATE_WALLS}>
           <AddCircle />
         </ToggleButton> */}
-        <Tooltip title="Create room" arrow placement="right">
-          <ToggleButton value={ToolMode.CREATE_ROOM}>
+
+        <ToggleButton value={ToolMode.CREATE_ROOM}>
+          <Tooltip title="Create room" arrow placement="right">
             <AddBox />
-          </ToggleButton>
-        </Tooltip>
-        <Tooltip title="Create door" arrow placement="right">
-          <ToggleButton value={ToolMode.CREATE_DOOR}>
+          </Tooltip>
+        </ToggleButton>
+
+        <ToggleButton value={ToolMode.CREATE_DOOR}>
+          <Tooltip title="Create door" arrow placement="right">
             <DoorFront />
-          </ToggleButton>
-        </Tooltip>
-        <Tooltip title="Create window" arrow placement="right">
-          <ToggleButton value={ToolMode.CREATE_WINDOW}>
+          </Tooltip>
+        </ToggleButton>
+
+        <ToggleButton value={ToolMode.CREATE_WINDOW}>
+          <Tooltip title="Create window" arrow placement="right">
             <RollerShades />
-          </ToggleButton>
-        </Tooltip>
+          </Tooltip>
+        </ToggleButton>
       </ToggleButtonGroup>
 
       <ToggleButtonGroup
@@ -60,35 +63,36 @@ export const Toolbox = () => {
         orientation="vertical"
         value={state.snapRooms ? ["snap_on"] : []}
       >
-        <Tooltip
-          title="Toggle snapping (hold shift to temporarily reverse)"
-          arrow
-          placement="right"
+        <ToggleButton
+          onClick={() => {
+            dispatch({ type: CanvasActions.TOGGLE_SNAP_ROOMS });
+          }}
+          value={"snap_on"}
         >
-          <ToggleButton
-            onClick={() => {
-              dispatch({ type: CanvasActions.TOGGLE_SNAP_ROOMS });
-            }}
-            value={"snap_on"}
+          <Tooltip
+            title="Toggle snapping (hold shift to temporarily reverse)"
+            arrow
+            placement="right"
           >
             <Anchor />
-          </ToggleButton>
-        </Tooltip>
-        <Tooltip
-          title="Delete selected corner and attached box"
-          arrow
-          placement="right"
+          </Tooltip>
+        </ToggleButton>
+
+        <ToggleButton
+          value={"delete_corner"}
+          disabled={state.selectedCorner === null}
+          onClick={() => {
+            dispatch({ type: CanvasActions.DELETE_SELECTED_CORNER });
+          }}
         >
-          <ToggleButton
-            value={"delete_corner"}
-            disabled={state.selectedCorner === null}
-            onClick={() => {
-              dispatch({ type: CanvasActions.DELETE_SELECTED_CORNER });
-            }}
+          <Tooltip
+            title="Delete selected corner and attached box"
+            arrow
+            placement="right"
           >
             <Backspace />
-          </ToggleButton>
-        </Tooltip>
+          </Tooltip>
+        </ToggleButton>
       </ToggleButtonGroup>
     </div>
   );
