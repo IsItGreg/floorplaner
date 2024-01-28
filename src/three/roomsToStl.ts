@@ -2,18 +2,11 @@ import { Box, BoxType } from "../components/Canvas";
 import * as THREE from "three";
 import { STLExporter } from "three/examples/jsm/exporters/STLExporter";
 import { ADDITION, SUBTRACTION, Brush, Evaluator } from "three-bvh-csg";
+import { download } from "../download";
 
 const ROOM_HEIGHT = 240;
 const DOOR_HEIGHT = 200;
 const WINDOW_HEIGHT = 120;
-
-const save = (blob: Blob, filename: string) => {
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(link.href);
-};
 
 const getRoomWithWalls = (room: Box, wallThickness: number = 10): Box => {
   // room is two points
@@ -124,5 +117,5 @@ export const convertRoomsToStl = (boxes: Box[]) => {
   const exporter = new STLExporter();
   const stl = exporter.parse(result);
 
-  save(new Blob([stl], { type: "application/octet-stream" }), "room.stl");
+  download(new Blob([stl], { type: "application/octet-stream" }), "room.stl");
 };

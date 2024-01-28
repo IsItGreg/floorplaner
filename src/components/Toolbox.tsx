@@ -5,8 +5,8 @@ import {
   PanTool,
   Anchor,
   DoorFront,
-  Window,
   Backspace,
+  RollerShades,
 } from "@mui/icons-material";
 import { ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
 import React from "react";
@@ -50,7 +50,7 @@ export const Toolbox = () => {
         </Tooltip>
         <Tooltip title="Create window" arrow placement="right">
           <ToggleButton value={ToolMode.CREATE_WINDOW}>
-            <Window />
+            <RollerShades />
           </ToggleButton>
         </Tooltip>
       </ToggleButtonGroup>
