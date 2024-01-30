@@ -30,10 +30,14 @@ export const Toolbox = () => {
         }}
       >
         <ToggleButton value={ToolMode.NONE}>
-          <PanToolAlt />
+          <Tooltip title="Select tool" arrow placement="right">
+            <PanToolAlt />
+          </Tooltip>
         </ToggleButton>
         <ToggleButton value={ToolMode.PAN}>
-          <PanTool />
+          <Tooltip title="Pan tool" arrow placement="right">
+            <PanTool />
+          </Tooltip>
         </ToggleButton>
         {/* <ToggleButton value={Mode.CREATE_WALLS}>
           <AddCircle />

@@ -28,7 +28,7 @@ export const Sidebar = () => {
         placement="bottom"
       >
         <button
-          className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 hover:bg-slate-700"
           onClick={() => {
             if (inputRef.current) {
               inputRef.current.click();
@@ -38,7 +38,6 @@ export const Sidebar = () => {
           <input
             ref={inputRef}
             hidden
-            className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
             type="file"
             accept=".json"
             onChange={(e) => {
@@ -68,7 +67,7 @@ export const Sidebar = () => {
         placement="bottom"
       >
         <button
-          className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 enabled:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={state.rooms.length === 0}
           onClick={() => {
             download(
@@ -82,7 +81,7 @@ export const Sidebar = () => {
         </button>
       </Tooltip>
       <button
-        className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mx-5 rounded-md border-2 border-slate-300 p-2 text-slate-200 enabled:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={state.rooms.length === 0}
         onClick={() => {
           convertRoomsToStl(state.rooms);
@@ -93,7 +92,7 @@ export const Sidebar = () => {
       </button>
       <Tooltip title="Warning, this cannot be undone." arrow placement="bottom">
         <button
-          className="mx-5 rounded-md border-2 border-red-300 p-2 text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mx-5 rounded-md border-2 border-red-300 p-2 text-red-200 enabled:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={state.rooms.length === 0}
           onClick={() => {
             dispatch({ type: CanvasActions.CLEAR_CANVAS });

@@ -478,7 +478,7 @@ const Canvas = () => {
           ))}
         </Layer>
         <Layer>
-          {true && (
+          {false && (
             // Circle follows mouse
             <Circle
               x={circlePosition.x}
